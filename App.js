@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import { StatusBar, Platform } from 'react-native';
 import { AuthContext, AuthProvider } from './src/context/AuthContext';
 import { AlertProvider } from './src/context/AlertContext';
 
@@ -30,6 +31,7 @@ const AuthStack = () => (
 const StudentTabs = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
+      headerShown: false,
       tabBarIcon: ({ color, size }) => {
         return <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />;
       },
@@ -124,6 +126,7 @@ export default function App() {
     <AuthProvider>
       <PaperProvider>
         <AlertProvider>
+          <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
           <AppNav />
         </AlertProvider>
       </PaperProvider>

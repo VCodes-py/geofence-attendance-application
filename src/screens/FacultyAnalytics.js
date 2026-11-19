@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, StyleSheet, ScrollView, Alert, ActivityIndicator, Text, Platform } from 'react-native';
 import { Button, Card, Title, Paragraph, Menu, DataTable } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomDropdown from '../components/CustomDropdown';
 import { AlertContext } from '../context/AlertContext';
 import client from '../api/client';
@@ -14,6 +15,8 @@ const FacultyAnalytics = () => {
     const [stats, setStats] = useState(null);
     const [details, setDetails] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [exportingSession, setExportingSession] = useState(false);
+    const [exportingMonthly, setExportingMonthly] = useState(false);
 
     // Menu state removed, CustomDropdown handles it
 
@@ -59,6 +62,7 @@ const FacultyAnalytics = () => {
 
     const exportCSV = async () => {
         if (!selectedSession) return;
+        setExportingSession(true);
         try {
             showAlert('Preparing Export', 'Generating CSV...', null, 'info');
 
@@ -96,11 +100,14 @@ const FacultyAnalytics = () => {
             console.log('Export error:', e);
             const errorMsg = e.response?.data?.message || 'Failed to export and share CSV';
             showAlert('Export Failed', errorMsg, null, 'error');
+        } finally {
+            setExportingSession(false);
         }
     };
 
     const exportMonthlyCSV = async () => {
         if (!selectedSession || !selectedSession.subject) return;
+        setExportMonthly(true);
         try {
             showAlert('Preparing Export', 'Generating Monthly CSV...', null, 'info');
 
@@ -139,6 +146,8 @@ const FacultyAnalytics = () => {
             console.log('Export Monthly error:', e);
             const errorMsg = e.response?.data?.message || 'Failed to export monthly CSV. Ensure there is data.';
             showAlert('Export Failed', errorMsg, null, 'error');
+        } finally {
+            setExportMonthly(false);
         }
     };
 
@@ -147,71 +156,76 @@ const FacultyAnalytics = () => {
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Analytics Dashboard</Text>
             </View>
 
-            <Card style={styles.card}>
-                <Card.Content>
-                    <CustomDropdown
-                        label="Select a Class Session"
-                        placeholder="Choose Session"
-                        options={sessions.map(s => ({ ...s, displayLabel: `${s.subject?.name} | ${new Date(s.startTime).toLocaleDateString()}` }))}
-                        selectedValue={selectedSession ? { ...selectedSession, displayLabel: `${selectedSession.subject?.name} | ${new Date(selectedSession.startTime).toLocaleDateString()}` } : null}
-                        onSelect={(item) => loadSessionData(item)}
-                        labelField="displayLabel"
-                        valueField="_id"
-                    />
-                </Card.Content>
-            </Card>
+            <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+                <Card style={styles.card}>
+                    <Card.Content>
+                        <CustomDropdown
+                            label="Select a Class Session"
+                            placeholder="Choose Session"
+                            options={sessions.map(s => ({ ...s, displayLabel: `${s.subject?.name} | ${new Date(s.startTime).toLocaleDateString()}` }))}
+                            selectedValue={selectedSession ? { ...selectedSession, displayLabel: `${selectedSession.subject?.name} | ${new Date(selectedSession.startTime).toLocaleDateString()}` } : null}
+                            onSelect={(item) => loadSessionData(item)}
+                            labelField="displayLabel"
+                            valueField="_id"
+                        />
+                    </Card.Content>
+                </Card>
 
-            {loading ? (
-                <ActivityIndicator style={{ marginTop: 20 }} />
-            ) : selectedSession && stats ? (
-                <View>
-                    <Card style={[styles.card, styles.statsCard]}>
-                        <Card.Content>
-                            <Text style={styles.statsTitle}>Overview Snapshot</Text>
+                {loading ? (
+                    <ActivityIndicator style={{ marginTop: 20 }} />
+                ) : selectedSession && stats ? (
+                    <View>
+                        <Card style={[styles.card, styles.statsCard]}>
+                            <Card.Content>
+                                <Text style={styles.statsTitle}>Overview Snapshot</Text>
 
-                            <View style={styles.statRow}>
-                                <Text style={styles.statLabel}>Total Present</Text>
-                                <Text style={styles.statValue}>{stats.totalPresent}</Text>
-                            </View>
+                                <View style={styles.statRow}>
+                                    <Text style={styles.statLabel}>Total Present</Text>
+                                    <Text style={styles.statValue}>{stats.totalPresent}</Text>
+                                </View>
 
-                            <View style={styles.statRow}>
-                                <Text style={styles.statLabel}>Status</Text>
-                                <Text style={[styles.statusBadge, {
-                                    backgroundColor: selectedSession.status === 'ACTIVE' ? '#D1FAE5' : '#F1F5F9',
-                                    color: selectedSession.status === 'ACTIVE' ? '#059669' : '#475569'
-                                }]}>
-                                    {selectedSession.status}
-                                </Text>
-                            </View>
+                                <View style={styles.statRow}>
+                                    <Text style={styles.statLabel}>Status</Text>
+                                    <Text style={[styles.statusBadge, {
+                                        backgroundColor: selectedSession.status === 'ACTIVE' ? '#D1FAE5' : '#F1F5F9',
+                                        color: selectedSession.status === 'ACTIVE' ? '#059669' : '#475569'
+                                    }]}>
+                                        {selectedSession.status}
+                                    </Text>
+                                </View>
 
-                            <View style={{ gap: 12, marginTop: 24 }}>
-                                <Button
-                                    mode="contained"
-                                    icon="download"
-                                    onPress={exportCSV}
-                                    style={styles.exportBtn}
-                                    labelStyle={{ fontWeight: 'bold', fontSize: 16 }}
-                                >
-                                    Export Session CSV
-                                </Button>
+                                <View style={{ gap: 12, marginTop: 24 }}>
+                                    <Button
+                                        mode="contained"
+                                        icon={exportingSession ? undefined : "download"}
+                                        loading={exportingSession}
+                                        disabled={exportingSession || exportingMonthly}
+                                        onPress={exportCSV}
+                                        style={styles.exportBtn}
+                                        labelStyle={{ fontWeight: 'bold', fontSize: 16 }}
+                                    >
+                                        Export Session CSV
+                                    </Button>
 
-                                <Button
-                                    mode="outlined"
-                                    icon="calendar-month"
-                                    onPress={exportMonthlyCSV}
-                                    style={styles.exportOutlineBtn}
-                                    labelStyle={{ fontWeight: 'bold', fontSize: 15 }}
-                                >
-                                    Export Monthly Report
-                                </Button>
-                            </View>
-                        </Card.Content>
-                    </Card>
+                                    <Button
+                                        mode="outlined"
+                                        icon={exportingMonthly ? undefined : "calendar-month"}
+                                        loading={exportingMonthly}
+                                        disabled={exportingSession || exportingMonthly}
+                                        onPress={exportMonthlyCSV}
+                                        style={styles.exportOutlineBtn}
+                                        labelStyle={{ fontWeight: 'bold', fontSize: 15 }}
+                                    >
+                                        Export Monthly Report
+                                    </Button>
+                                </View>
+                            </Card.Content>
+                        </Card>
 
                     <Card style={styles.card}>
                         <Card.Content style={{ paddingHorizontal: 0 }}>
@@ -253,19 +267,30 @@ const FacultyAnalytics = () => {
             ) : (
                 <Paragraph style={styles.emptyText}>No historical classes found. Start a class to generate analytics.</Paragraph>
             )}
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: '#F8F9FA' },
     container: { flex: 1, backgroundColor: '#F8F9FA' },
     contentContainer: { padding: 16, paddingBottom: 40 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA' },
 
     header: {
-        marginBottom: 24,
-        marginTop: 10,
-        paddingHorizontal: 8
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 14,
+        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        zIndex: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
     },
     headerTitle: {
         fontSize: 28,

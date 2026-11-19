@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
-import { Button, Card, Title, Paragraph, ActivityIndicator, Text, Snackbar } from 'react-native-paper';
+import { Button, Card, Title, Paragraph, Text, Snackbar } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
@@ -14,7 +15,7 @@ const StudentDashboard = () => {
     const { userToken, logout } = useContext(AuthContext);
     const [location, setLocation] = useState(null);
     const [errorMsg, setErrorMsg] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loadingSessionId, setLoadingSessionId] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -127,11 +128,11 @@ const StudentDashboard = () => {
     };
 
     const markAttendance = async (session) => {
-        setLoading(true);
+        setLoadingSessionId(session._id);
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
             showSnackbar('Location permission required to mark attendance.', 'error');
-            setLoading(false);
+            setLoadingSessionId(null);
             return;
         }
 
@@ -173,24 +174,25 @@ const StudentDashboard = () => {
             const errorMessage = (error.message && !error.response) ? error.message : (error.response?.data?.message || 'Cannot mark attendance. Please try again.');
             showSnackbar(errorMessage, 'error');
         } finally {
-            setLoading(false);
+            setLoadingSessionId(null);
         }
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <View style={styles.header}>
+                <View>
+                    <Title style={styles.headerTitle}>Student Dashboard</Title>
+                    <Text style={styles.headerSubtitle}>Mark your attendance</Text>
+                </View>
+                <Button mode="text" onPress={logout} labelStyle={{ color: '#E11D48', fontWeight: 'bold' }}>Logout</Button>
+            </View>
+
             <ScrollView 
+                style={styles.container}
                 contentContainerStyle={styles.contentContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
-                <View style={styles.header}>
-                    <View>
-                        <Title style={styles.headerTitle}>Student Dashboard</Title>
-                        <Text style={styles.headerSubtitle}>Mark your attendance</Text>
-                    </View>
-                    <Button mode="text" onPress={logout} labelStyle={{ color: '#E11D48', fontWeight: 'bold' }}>Logout</Button>
-                </View>
-
                 <Card style={[styles.card, styles.locationBox]}>
                     <Card.Content>
                         <View style={styles.statusRow}>
@@ -253,8 +255,8 @@ const StudentDashboard = () => {
                                 <Button
                                     mode="contained"
                                     onPress={() => markAttendance(session)}
-                                    loading={loading === true}
-                                    disabled={loading === true || location === null}
+                                    loading={loadingSessionId === session._id}
+                                    disabled={loadingSessionId !== null || location === null}
                                     style={styles.primaryBtn}
                                     labelStyle={{ fontWeight: 'bold', fontSize: 16, paddingVertical: 4 }}
                                     contentStyle={{ width: '100%' }}
@@ -280,11 +282,32 @@ const StudentDashboard = () => {
             >
                 <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 15 }}>{snackbarMessage}</Text>
             </Snackbar>
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#F8F9FA'
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 14,
+        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        zIndex: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+    },
     container: {
         flex: 1,
         backgroundColor: '#F8F9FA'
@@ -292,14 +315,6 @@ const styles = StyleSheet.create({
     contentContainer: {
         padding: 16,
         paddingBottom: 40
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
-        marginTop: 10,
-        paddingHorizontal: 8
     },
     headerTitle: {
         fontSize: 28,

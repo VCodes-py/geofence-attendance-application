@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const SessionTimer = ({ endTime, onExpire }) => {
     const [timeLeft, setTimeLeft] = useState('');
     const [isExpired, setIsExpired] = useState(false);
+    const hasExpiredRef = useRef(false);
 
     useEffect(() => {
         if (!endTime) return;
@@ -17,7 +18,10 @@ const SessionTimer = ({ endTime, onExpire }) => {
             if (difference <= 0) {
                 setTimeLeft('00:00');
                 setIsExpired(true);
-                if (onExpire) onExpire();
+                if (!hasExpiredRef.current) {
+                    hasExpiredRef.current = true;
+                    if (onExpire) onExpire();
+                }
                 return true; // Expired
             }
 

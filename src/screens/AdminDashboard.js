@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Button, Card, Title, Text, TextInput, Snackbar, IconButton, DataTable, Menu, Switch } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthContext } from '../context/AuthContext';
 import CustomDropdown from '../components/CustomDropdown';
 import client from '../api/client';
@@ -9,7 +10,10 @@ const AdminDashboard = () => {
     const { logout } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('CLASSES');
     const [refreshing, setRefreshing] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [subjectLoading, setSubjectLoading] = useState(false);
+    const [studentLoading, setStudentLoading] = useState(false);
+    const [facultyLoading, setFacultyLoading] = useState(false);
+    const [venueLoading, setVenueLoading] = useState(false);
 
     // Data State
     const [subjects, setSubjects] = useState([]);
@@ -68,7 +72,7 @@ const AdminDashboard = () => {
 
     const handleCreateSubject = async () => {
         if (!newSubject.name || !newSubject.code || !newSubject.facultyId) return showSnackbar('Name, Code, and Faculty are required.', 'error');
-        setLoading(true);
+        setSubjectLoading(true);
         try {
             await client.post('/admin/subjects', {
                 name: newSubject.name,
@@ -81,12 +85,12 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to map class', 'error');
-        } finally { setLoading(false); }
+        } finally { setSubjectLoading(false); }
     };
 
     const handleCreateStudent = async () => {
         if (!newStudent.email || !newStudent.studentId || !newStudent.password) return showSnackbar('Email, ID, and Password required.', 'error');
-        setLoading(true);
+        setStudentLoading(true);
         try {
             await client.post('/admin/students', newStudent);
             showSnackbar('Student generated successfully', 'success');
@@ -94,12 +98,12 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to add student', 'error');
-        } finally { setLoading(false); }
+        } finally { setStudentLoading(false); }
     };
 
     const handleCreateFaculty = async () => {
         if (!newFaculty.email || !newFaculty.firstName || !newFaculty.password) return showSnackbar('Email, Name, and Password required.', 'error');
-        setLoading(true);
+        setFacultyLoading(true);
         try {
             await client.post('/admin/faculty', newFaculty);
             showSnackbar('Faculty generated successfully', 'success');
@@ -107,12 +111,12 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to add faculty', 'error');
-        } finally { setLoading(false); }
+        } finally { setFacultyLoading(false); }
     };
 
     const handleCreateVenue = async () => {
         if (!newVenue.name || !newVenue.lat || !newVenue.lng) return showSnackbar('Name, Lat, and Lng required.', 'error');
-        setLoading(true);
+        setVenueLoading(true);
         try {
             await client.post('/admin/venues', {
                 name: newVenue.name,
@@ -125,7 +129,7 @@ const AdminDashboard = () => {
             fetchData();
         } catch (error) {
             showSnackbar(error.response?.data?.message || 'Failed to configure venue', 'error');
-        } finally { setLoading(false); }
+        } finally { setVenueLoading(false); }
     };
 
     const handleDelete = async (collection, id) => {
@@ -194,7 +198,7 @@ const AdminDashboard = () => {
                         valueField="_id"
                     />
 
-                    <Button mode="contained" onPress={handleCreateSubject} loading={loading} style={styles.actionBtn}>Create & Assign Class</Button>
+                    <Button mode="contained" onPress={handleCreateSubject} loading={subjectLoading} disabled={subjectLoading} style={styles.actionBtn}>Create & Assign Class</Button>
                 </Card.Content>
             </Card>
 
@@ -221,7 +225,7 @@ const AdminDashboard = () => {
                     <TextInput label="Email Address" value={newStudent.email} onChangeText={t => setNewStudent({ ...newStudent, email: t })} style={styles.input} mode="outlined" autoCapitalize="none" />
                     <TextInput label="Role ID (Roll No)" value={newStudent.studentId} onChangeText={t => setNewStudent({ ...newStudent, studentId: t })} style={styles.input} mode="outlined" />
                     <TextInput label="Temporary Password" value={newStudent.password} onChangeText={t => setNewStudent({ ...newStudent, password: t })} style={styles.input} mode="outlined" secureTextEntry />
-                    <Button mode="contained" onPress={handleCreateStudent} loading={loading} style={styles.actionBtn}>Create Student Account</Button>
+                    <Button mode="contained" onPress={handleCreateStudent} loading={studentLoading} disabled={studentLoading} style={styles.actionBtn}>Create Student Account</Button>
                 </Card.Content>
             </Card>
 
@@ -253,7 +257,7 @@ const AdminDashboard = () => {
                     <TextInput label="Email Address" value={newFaculty.email} onChangeText={t => setNewFaculty({ ...newFaculty, email: t })} style={styles.input} mode="outlined" autoCapitalize="none" />
                     <TextInput label="Department" value={newFaculty.department} onChangeText={t => setNewFaculty({ ...newFaculty, department: t })} style={styles.input} mode="outlined" />
                     <TextInput label="Temporary Password" value={newFaculty.password} onChangeText={t => setNewFaculty({ ...newFaculty, password: t })} style={styles.input} mode="outlined" secureTextEntry />
-                    <Button mode="contained" onPress={handleCreateFaculty} loading={loading} style={styles.actionBtn}>Create Faculty Account</Button>
+                    <Button mode="contained" onPress={handleCreateFaculty} loading={facultyLoading} disabled={facultyLoading} style={styles.actionBtn}>Create Faculty Account</Button>
                 </Card.Content>
             </Card>
 
@@ -283,7 +287,7 @@ const AdminDashboard = () => {
                         <TextInput label="Longitude" value={newVenue.lng} onChangeText={t => setNewVenue({ ...newVenue, lng: t })} style={[styles.input, { flex: 1 }]} mode="outlined" keyboardType="numeric" />
                     </View>
                     <TextInput label="Radius (Meters)" value={newVenue.radiusMeters} onChangeText={t => setNewVenue({ ...newVenue, radiusMeters: t })} style={styles.input} mode="outlined" keyboardType="numeric" />
-                    <Button mode="contained" onPress={handleCreateVenue} loading={loading} style={styles.actionBtn}>Add Geofence Target</Button>
+                    <Button mode="contained" onPress={handleCreateVenue} loading={venueLoading} disabled={venueLoading} style={styles.actionBtn}>Add Geofence Target</Button>
                 </Card.Content>
             </Card>
 
@@ -324,11 +328,8 @@ const AdminDashboard = () => {
     );
 
     return (
-        <View style={styles.container}>
-            <ScrollView
-                contentContainerStyle={styles.contentContainer}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
-            >
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <View style={styles.fixedTopContainer}>
                 <View style={styles.header}>
                     <View>
                         <Title style={styles.headerTitle}>System Admin</Title>
@@ -338,13 +339,18 @@ const AdminDashboard = () => {
                 </View>
 
                 {renderTabs()}
+            </View>
 
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchData} />}
+            >
                 {activeTab === 'CLASSES' && renderClassesTab()}
                 {activeTab === 'STUDENTS' && renderStudentsTab()}
                 {activeTab === 'FACULTY' && renderFacultyTab()}
                 {activeTab === 'VENUES' && renderVenuesTab()}
                 {activeTab === 'SETTINGS' && renderSettingsTab()}
-
             </ScrollView>
 
             <Snackbar
@@ -356,17 +362,37 @@ const AdminDashboard = () => {
             >
                 <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 15 }}>{snackbarMsg}</Text>
             </Snackbar>
-        </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8F9FA' },
-    contentContainer: { padding: 16, paddingBottom: 60 },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    safeArea: { flex: 1, backgroundColor: '#F8F9FA' },
+    fixedTopContainer: {
+        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        zIndex: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        paddingBottom: 8,
+    },
+    header: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingHorizontal: 20, 
+        paddingTop: 10, 
+        paddingBottom: 6 
+    },
     headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#1E293B' },
     headerSubtitle: { fontSize: 16, color: '#64748B' },
-    tabScrollContainer: { flexDirection: 'row', marginBottom: 20 },
+    container: { flex: 1, backgroundColor: '#F8F9FA' },
+    contentContainer: { padding: 16, paddingBottom: 60 },
+    tabScrollContainer: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 4 },
     tabPrimaryBtn: { marginHorizontal: 4, borderColor: '#0EA5E9', minWidth: 100 },
     card: { marginBottom: 20, borderRadius: 16, backgroundColor: '#FFFFFF', elevation: 4 },
     listCard: { marginBottom: 10, backgroundColor: '#FFF' },

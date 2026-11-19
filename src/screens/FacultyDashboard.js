@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Text, Platform } from 'react-native';
 import { Button, Card, Title, Paragraph, TextInput, Menu, Portal, Dialog, DataTable } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthContext } from '../context/AuthContext';
 import { AlertContext } from '../context/AlertContext';
 import CustomDropdown from '../components/CustomDropdown';
@@ -19,7 +20,10 @@ const FacultyDashboard = () => {
     const [duration, setDuration] = useState('60');
     const [activeSession, setActiveSession] = useState(null);
     const [studentId, setStudentId] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [startLoading, setStartLoading] = useState(false);
+    const [stopLoading, setStopLoading] = useState(false);
+    const [editLoading, setEditLoading] = useState(false);
+    const [manualLoading, setManualLoading] = useState(false);
 
     // State variables for menus removed as CustomDropdown handles its own state internally.
 
@@ -73,7 +77,7 @@ const FacultyDashboard = () => {
     const startSession = async () => {
         if (!selectedVenue) return showAlert('Error', 'Select a Venue', null, 'error');
         if (!selectedSubject) return showAlert('Error', 'Select a Subject', null, 'error');
-        setLoading(true);
+        setStartLoading(true);
         try {
             const res = await client.post('/classes', {
                 subjectId: selectedSubject._id,
@@ -85,12 +89,12 @@ const FacultyDashboard = () => {
         } catch (e) {
             showAlert('Error', e.response?.data?.message || 'Failed', null, 'error');
         }
-        setLoading(false);
+        setStartLoading(false);
     };
 
     const stopSession = async () => {
         if (!activeSession) return;
-        setLoading(true);
+        setStopLoading(true);
         try {
             await client.put(`/classes/${activeSession._id}/stop`);
             setActiveSession(null);
@@ -98,7 +102,7 @@ const FacultyDashboard = () => {
         } catch (e) {
             showAlert('Error', 'Failed to stop', null, 'error');
         }
-        setLoading(false);
+        setStopLoading(false);
     };
 
     const handleEditSession = () => {
@@ -109,7 +113,7 @@ const FacultyDashboard = () => {
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Save Changes", onPress: async () => {
-                        setLoading(true);
+                        setEditLoading(true);
                         try {
                             const payload = {};
                             if (editRadius && editRadius !== activeSession.radiusMeters?.toString()) {
@@ -121,7 +125,7 @@ const FacultyDashboard = () => {
                             
                             if (Object.keys(payload).length === 0) {
                                 setEditModalVisible(false);
-                                setLoading(false);
+                                setEditLoading(false);
                                 return;
                             }
 
@@ -132,7 +136,7 @@ const FacultyDashboard = () => {
                         } catch (e) {
                             showAlert('Error', e.response?.data?.message || 'Failed to update session', null, 'error');
                         }
-                        setLoading(false);
+                        setEditLoading(false);
                     }
                 }
             ],
@@ -194,6 +198,7 @@ const FacultyDashboard = () => {
         if (!activeSession) return showAlert('Error', 'No Active Session', null, 'error');
         if (!studentId) return showAlert('Error', 'Enter Student Roll No', null, 'error');
 
+        setManualLoading(true);
         try {
             await client.post('/classes/manual-attendance', {
                 sessionId: activeSession._id,
@@ -203,11 +208,13 @@ const FacultyDashboard = () => {
             setStudentId('');
         } catch (e) {
             showAlert('Error', e.response?.data?.message || 'Failed', null, 'error');
+        } finally {
+            setManualLoading(false);
         }
     };
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
             <View style={styles.header}>
                 <View>
                     <Title style={styles.headerTitle}>Faculty Dashboard</Title>
@@ -216,104 +223,109 @@ const FacultyDashboard = () => {
                 <Button mode="text" onPress={logout} labelStyle={{ color: '#E11D48', fontWeight: 'bold' }}>Logout</Button>
             </View>
 
-            <Card style={styles.card}>
-                <Card.Content>
-                    <Title style={styles.cardTitle}>Class Management</Title>
+            <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+                <Card style={styles.card}>
+                    <Card.Content>
+                        <Title style={styles.cardTitle}>Class Management</Title>
 
-                    <CustomDropdown
-                        label="Select Subject"
-                        placeholder="Choose Subject"
-                        options={subjects}
-                        selectedValue={selectedSubject}
-                        onSelect={setSelectedSubject}
-                        labelField="name"
-                        valueField="_id"
-                    />
+                        <CustomDropdown
+                            label="Select Subject"
+                            placeholder="Choose Subject"
+                            options={subjects}
+                            selectedValue={selectedSubject}
+                            onSelect={setSelectedSubject}
+                            labelField="name"
+                            valueField="_id"
+                        />
 
-                    <CustomDropdown
-                        label="Select Venue"
-                        placeholder="Choose Venue"
-                        options={venues}
-                        selectedValue={selectedVenue}
-                        onSelect={setSelectedVenue}
-                        labelField="name"
-                        valueField="_id"
-                    />
+                        <CustomDropdown
+                            label="Select Venue"
+                            placeholder="Choose Venue"
+                            options={venues}
+                            selectedValue={selectedVenue}
+                            onSelect={setSelectedVenue}
+                            labelField="name"
+                            valueField="_id"
+                        />
 
-                    <TextInput
-                        label="Duration (Minutes)"
-                        value={duration}
-                        onChangeText={setDuration}
-                        keyboardType="numeric"
-                        style={styles.input}
-                        mode="outlined"
-                        outlineColor="#CBD5E1"
-                        activeOutlineColor="#0EA5E9"
-                    />
+                        <TextInput
+                            label="Duration (Minutes)"
+                            value={duration}
+                            onChangeText={setDuration}
+                            keyboardType="numeric"
+                            style={styles.input}
+                            mode="outlined"
+                            outlineColor="#CBD5E1"
+                            activeOutlineColor="#0EA5E9"
+                        />
 
-                    {!activeSession ? (
-                        <Button
-                            mode="contained"
-                            onPress={startSession}
-                            loading={loading === true}
-                            style={styles.startBtn}
-                            labelStyle={{ fontWeight: 'bold', fontSize: 16, paddingVertical: 4 }}
-                        >
-                            Start Class
-                        </Button>
-                    ) : (
-                        <View style={styles.activeSessionContainer}>
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <Text style={styles.activeStatusText}>• Session Active</Text>
-                                <SessionTimer endTime={activeSession.endTime} onExpire={() => fetchCurrentSession()} />
-                            </View>
+                        {!activeSession ? (
                             <Button
                                 mode="contained"
-                                onPress={stopSession}
-                                loading={loading === true}
-                                style={styles.stopBtn}
-                                labelStyle={{ fontWeight: 'bold', fontSize: 16, color: '#FFFFFF', paddingVertical: 4 }}
+                                onPress={startSession}
+                                loading={startLoading}
+                                disabled={startLoading}
+                                style={styles.startBtn}
+                                labelStyle={{ fontWeight: 'bold', fontSize: 16, paddingVertical: 4 }}
                             >
-                                Stop Class
+                                Start Class
                             </Button>
+                        ) : (
+                            <View style={styles.activeSessionContainer}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <Text style={styles.activeStatusText}>• Session Active</Text>
+                                    <SessionTimer endTime={activeSession.endTime} onExpire={() => fetchCurrentSession()} />
+                                </View>
+                                <Button
+                                    mode="contained"
+                                    onPress={stopSession}
+                                    loading={stopLoading}
+                                    disabled={stopLoading}
+                                    style={styles.stopBtn}
+                                    labelStyle={{ fontWeight: 'bold', fontSize: 16, color: '#FFFFFF', paddingVertical: 4 }}
+                                >
+                                    Stop Class
+                                </Button>
 
-                            <View style={[styles.actionRow, { marginBottom: 8 }]}>
-                                <Button mode="outlined" textColor="#0EA5E9" onPress={() => fetchStats(activeSession._id)} style={styles.actionBtn}>View Stats</Button>
-                                <Button mode="outlined" textColor="#0EA5E9" onPress={() => exportCSV(activeSession._id)} style={styles.actionBtn}>Export CSV</Button>
+                                <View style={[styles.actionRow, { marginBottom: 8 }]}>
+                                    <Button mode="outlined" textColor="#0EA5E9" onPress={() => fetchStats(activeSession._id)} style={styles.actionBtn}>View Stats</Button>
+                                    <Button mode="outlined" textColor="#0EA5E9" onPress={() => exportCSV(activeSession._id)} style={styles.actionBtn}>Export CSV</Button>
+                                </View>
+                                <Button mode="contained-tonal" icon="pencil" onPress={openEditModal} style={{ borderRadius: 8 }}>
+                                    Edit Parameters
+                                </Button>
                             </View>
-                            <Button mode="contained-tonal" icon="pencil" onPress={openEditModal} style={{ borderRadius: 8 }}>
-                                Edit Parameters
-                            </Button>
-                        </View>
-                    )}
-                </Card.Content>
-            </Card>
-
-            {activeSession && (
-                <Card style={[styles.card, { backgroundColor: '#F0F9FF', borderColor: '#E0F2FE', borderWidth: 1 }]}>
-                    <Card.Content>
-                        <Title style={[styles.cardTitle, { color: '#0369A1' }]}>Manual Attendance</Title>
-                        <Text style={{ color: '#475569', marginBottom: 12 }}>Force mark a student present (bypasses geofence)</Text>
-                        <TextInput
-                            label="Student Roll No / ID"
-                            value={studentId}
-                            onChangeText={setStudentId}
-                            style={[styles.input, { backgroundColor: '#FFFFFF' }]}
-                            mode="outlined"
-                            outlineColor="#BAE6FD"
-                            activeOutlineColor="#0284C7"
-                        />
-                        <Button
-                            mode="contained"
-                            onPress={manualAttendance}
-                            style={{ backgroundColor: '#0284C7', borderRadius: 8, marginTop: 8 }}
-                            labelStyle={{ fontWeight: 'bold' }}
-                        >
-                            Mark Present
-                        </Button>
+                        )}
                     </Card.Content>
                 </Card>
-            )}
+
+                {activeSession && (
+                    <Card style={[styles.card, { backgroundColor: '#F0F9FF', borderColor: '#E0F2FE', borderWidth: 1 }]}>
+                        <Card.Content>
+                            <Title style={[styles.cardTitle, { color: '#0369A1' }]}>Manual Attendance</Title>
+                            <Text style={{ color: '#475569', marginBottom: 12 }}>Force mark a student present (bypasses geofence)</Text>
+                            <TextInput
+                                label="Student Roll No / ID"
+                                value={studentId}
+                                onChangeText={setStudentId}
+                                style={[styles.input, { backgroundColor: '#FFFFFF' }]}
+                                mode="outlined"
+                                outlineColor="#BAE6FD"
+                                activeOutlineColor="#0284C7"
+                            />
+                            <Button
+                                mode="contained"
+                                onPress={manualAttendance}
+                                loading={manualLoading}
+                                disabled={manualLoading}
+                                style={{ backgroundColor: '#0284C7', borderRadius: 8, marginTop: 8 }}
+                                labelStyle={{ fontWeight: 'bold' }}
+                            >
+                                Mark Present
+                            </Button>
+                        </Card.Content>
+                    </Card>
+                )}
 
             <Portal>
                 <Dialog visible={editModalVisible} onDismiss={() => setEditModalVisible(false)} style={{ backgroundColor: '#FFF' }}>
@@ -345,7 +357,7 @@ const FacultyDashboard = () => {
                     </Dialog.Content>
                     <Dialog.Actions>
                         <Button onPress={() => setEditModalVisible(false)} textColor="#64748B">Cancel</Button>
-                        <Button onPress={handleEditSession} mode="contained" loading={loading === true} style={{ borderRadius: 8, backgroundColor: '#0EA5E9' }}>Save</Button>
+                        <Button onPress={handleEditSession} mode="contained" loading={editLoading} disabled={editLoading} style={{ borderRadius: 8, backgroundColor: '#0EA5E9' }}>Save</Button>
                     </Dialog.Actions>
                 </Dialog>
 
@@ -381,11 +393,13 @@ const FacultyDashboard = () => {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: '#F8F9FA' },
     container: { flex: 1, backgroundColor: '#F8F9FA' },
     contentContainer: { padding: 16, paddingBottom: 40 },
 
@@ -393,9 +407,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
-        marginTop: 10,
-        paddingHorizontal: 8
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 14,
+        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E2E8F0',
+        zIndex: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
     },
     headerTitle: {
         fontSize: 28,
