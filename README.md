@@ -1,102 +1,112 @@
-# 📱 GeoAttendance Mobile Client (React Native / Expo)
+# 📍 GeoAttendance Mobile Application
 
-[![React Native Version](https://img.shields.io/badge/React_Native-v0.72+-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
-[![Expo SDK](https://img.shields.io/badge/Expo_SDK-v54-000020?logo=expo&logoColor=white)](https://expo.dev/)
-[![Location Services](https://img.shields.io/badge/Location-GPS-0EA5E9?logo=google-maps&logoColor=white)](https://expo.dev/versions/latest/sdk/location)
+[![React Native](https://img.shields.io/badge/React_Native-v0.88-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo SDK](https://img.shields.io/badge/Expo_SDK-v58-000020?logo=expo&logoColor=white)](https://expo.dev/)
+[![Location Services](https://img.shields.io/badge/Location-High_Precision_GPS-0EA5E9?logo=google-maps&logoColor=white)](https://expo.dev/versions/latest/sdk/location)
+[![UI Library](https://img.shields.io/badge/UI-React_Native_Paper_MD3-6200EE?logo=material-design&logoColor=white)](https://callstack.github.io/react-native-paper/)
+[![Security](https://img.shields.io/badge/Security-Device_Binding_%26_Anti--Spoof-10B981?logo=shield&logoColor=white)](https://github.com/VCodes-py/geofence-attendance-application)
 
-A premium, secure React Native student check-in client designed to verify coordinate presence within server-enforced geofence boundaries. It integrates anti-tampering device binding, mock location guards, push notifications, and a secure password reset system.
-
----
-
-## 📂 Core Screen Modules
-
-* **Login Panel (`LoginScreen.js`)**: Captures credentials, extracts hardware fingerprints, requests push notifications permissions, and communicates with the backend.
-* **Force Reset Stack (`ForceResetScreen.js`)**: Secure redirect view forcing users with temporary credentials (issued on admin roster CSV ingestion) to establish a private password before accessing dashboards.
-* **Student Dashboard (`StudentDashboard.js`)**: Queries scheduled classes matching the student's cohort section/division, samples GPS signals, and submits attendance requests.
+A modern, location-verified mobile attendance system engineered for universities, colleges, and corporate training centers. **GeoAttendance** automates check-ins by enforcing physical presence within dynamically configured geofence perimeters while shutting down proxy check-ins through hardware device binding and anti-spoof spatial filters.
 
 ---
 
-## ⚙️ Core Engineering Implementations
+## 🌟 Key Capabilities
 
-### 1. GPS Temporal Sampling & Averaging Guard
-To combat GPS drift in large institutional structures and block coordinates spoofing, the check-in hook employs a sampling algorithm:
-* **Temporal Iterations**: Collects **3 separate location samples** at **800ms intervals**.
-* **Centroid Math**: Averages the longitude and latitude coordinates to obtain a stable, drift-free reading.
-* **Accuracy Threshold**: Rejects checking in if the hardware accuracy value exceeds **15 meters**.
-* **Mock Detection**: Directly inspects the native coordinates metadata (`mocked` on Android / `isMock` on iOS) to block developer mock location tools.
+### 🎓 1. Student Experience
+* **Live Class Discovery**: Automatically surfaces active class sessions matching the student's enrolled courses.
+* **One-Tap Geofenced Check-In**: High-precision GPS acquisition validates that the student is physically within the venue perimeter.
+* **Attendance Tracking**: Visual progress bars and analytics displaying real-time attendance percentages and total classes attended per subject.
+* **Active Session Timers**: Synchronized live countdown timers indicating remaining check-in window time.
 
-### 2. Device Fingerprint Binding
-* On first authentication, the application queries the device for a permanent identifier (`expo-application` IDs) and locks the student profile in the database to this specific `deviceId`.
-* Prevents students from logging into other accounts to check in for absent classmates.
+### 👨‍🏫 2. Faculty Management
+* **Instant Class Activation**: Launch attendance sessions with custom durations, subjects, and venue geofence targets.
+* **Dynamic Parameter Tuning**: Modify radius (meters) or extend/shorten duration on the fly during active sessions.
+* **Live Attendance Monitor**: Real-time feed of students checking in with roll numbers and timestamps.
+* **Manual Override**: Dedicated faculty bypass to manually mark students present in exceptional circumstances (e.g. device failure).
+* **Comprehensive Analytics**: View historical session trends, student rosters, and generate single-session or monthly attendance reports.
 
-### 3. Push Alerts Integration
-* Registers the device with the **Expo Notification Service** on login.
-* The backend lookahead sweep cron uses this token to notify students 10 minutes before their registered division class starts.
+### 🛡️ 3. Administrative Control
+* **Campus Geofence Mapping**: Define venue targets with exact latitude, longitude, and custom radius boundaries.
+* **Academic Hierarchy**: Manage subjects, curriculum codes, faculty assignments, and student rosters.
+* **Device Security Toggle**: Globally toggle hardware device binding or unbind individual student devices when phones are upgraded or replaced.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🔒 Security & Anti-Fraud Architecture
 
-Ensure you have Node.js (v18+) and Expo Go installed on your debugging phone.
+To eliminate attendance fraud, proxy check-ins, and GPS spoofing, GeoAttendance incorporates multi-layered validation:
 
-```bash
-# Clone the repository
-git clone <your-mobile-repo-link>
-cd mobile
+### 📡 1. GPS Centroid Averaging & Drift Rejection
+Indoor environments frequently experience satellite multipath interference and GPS drift. GeoAttendance combats this via:
+* **Multi-Sample Averaging**: Takes 3 separate GPS readings across 800ms intervals and calculates the mathematical coordinate centroid.
+* **Accuracy Threshold**: Enforces a strict hardware accuracy ceiling (≤ 15 meters). Check-ins with weak or degraded signals are automatically rejected.
+* **Native Mock Location Detection**: Inspects native Android and iOS operating system flags (`mocked` / `isMock`) to instantly reject developer mock location tools and GPS spoofers.
 
-# Install dependencies
-npm install
+### 📱 2. Hardware Device Binding
+* On initial authentication, the client extracts the device's immutable hardware identifier (`Application.getAndroidId()` on Android or Vendor Identifier on iOS).
+* The account is permanently locked to this physical device in the central database, preventing a single present student from signing in to multiple absent classmates' accounts.
 
-# Start the local developer server
-npx expo start
+### 🔑 3. Enforced Credential Lifecycle
+* Newly provisioned accounts (from roster CSVs or admin creation) carry a temporary credential flag.
+* The application enforces a mandatory password reset flow before granting dashboard access.
+
+---
+
+## 📐 Application Architecture
+
 ```
-*Scan the generated QR code using your phone's camera (iOS) or the Expo Go app (Android) to open the app.*
-
-### 🔧 Connecting App to Backend (Local Debugging)
-To debug on a physical phone, you must point the app to your computer's local network IPv4 address:
-1. Open [src/api/client.js](src/api/client.js#L45)
-2. Locate the base URL definition:
-   ```javascript
-   let BASE_URL = "https://geo-fencing-attendance-backend.onrender.com/api/v1";
-   ```
-3. Update it to your computer's local network IP (e.g. `http://192.168.1.5:3000/api/v1`).
-4. Ensure both your computer and phone are connected to the **same Wi-Fi router**.
+geo-fencing-mobile-master/
+├── App.js                     # Root entry point, navigation containers & status bar config
+├── app.json                   # Expo SDK 58 application manifest & permissions
+├── package.json               # Dependencies & scripts
+└── src/
+    ├── api/
+    │   └── client.js          # Axios client with JWT interceptor & base URL
+    ├── components/
+    │   ├── CustomDropdown.js  # Reusable Material Design dropdown picker
+    │   └── SessionTimer.js    # Live countdown timer with auto-expiration callbacks
+    ├── context/
+    │   ├── AlertContext.js    # Global dialog & confirmation alert provider
+    │   └── AuthContext.js     # JWT token lifecycle, user state & role management
+    ├── screens/
+    │   ├── LoginScreen.js         # Secure credential entry & hardware fingerprinting
+    │   ├── ForceResetScreen.js    # Compulsory initial password change screen
+    │   ├── StudentDashboard.js    # Student check-in, GPS radar & progress metrics
+    │   ├── FacultyDashboard.js    # Session start/stop, manual check-in & parameters
+    │   ├── FacultyAnalytics.js    # Detailed session metrics & student roster breakdown
+    │   └── AdminDashboard.js      # Global system administration & geofence mapping
+    └── utils/
+        └── haversine.js       # Great-circle spatial distance calculation algorithm
+```
 
 ---
 
-## 🛠️ Standalone APK Compilation Guide (For Standalone Android Distribution)
+## 💻 Technology Stack
 
-You do **not** need a paid Google Play developer account to test or distribute standalone versions of this app. You can compile a standalone `.apk` installer locally on your machine for free:
+| Category | Technology |
+|---|---|
+| **Framework** | [React Native](https://reactnative.dev/) (v0.88.1) with [Expo](https://expo.dev/) (SDK 58) |
+| **Language** | Modern JavaScript (ES6+), React 19 |
+| **Component Library** | [React Native Paper](https://callstack.github.io/react-native-paper/) (MD3 Material Design) |
+| **Navigation** | [React Navigation 7](https://reactnavigation.org/) (Native Stack & Bottom Tabs) |
+| **Location & Hardware** | `expo-location`, `expo-device`, `expo-application` |
+| **Authentication** | JWT (JSON Web Tokens) with Secure Storage |
+| **Networking** | Axios REST Client |
+| **Spatial Math** | Haversine Great-Circle Distance Algorithm |
 
-### Prerequisites (Local Build Environment)
-1. **JDK 17**: Ensure Java Development Kit 17 is installed and added to your environmental variables (`JAVA_HOME`).
-2. **Android SDK**: Install Android Studio and set up the Android SDK Command-line Tools (`ANDROID_HOME`).
-3. **EAS CLI**: Install the Expo Application Services package globally:
-   ```bash
-   npm install -g eas-cli
-   ```
+---
 
-### Step-by-Step Build Commands
-1. Log in to your Expo account (create one for free at expo.dev):
-   ```bash
-   eas login
-   ```
-2. Configure EAS builds inside the mobile folder:
-   ```bash
-   eas build:configure
-   ```
-   *Select `android` as the platform. This will create an `eas.json` file.*
-3. Ensure the build configuration in `eas.json` is set to output an **APK** (not an AAB bundle). Update the `preview` profile in your `eas.json` to have:
-   ```json
-   "preview": {
-     "distribution": "internal",
-     "android": {
-       "buildType": "apk"
-     }
-   }
-   ```
-4. Run the local build command (which runs on your computer's hardware, avoiding EAS cloud credit costs):
-   ```bash
-   eas build --platform android --local --profile preview
-   ```
-5. Retrieve the compiled `.apk` binary file from the build output directory and distribute it to your users (e.g., host it for free inside your **GitHub Releases**).
+## 👥 Demo Personas & Test Credentials
+
+For evaluation and demonstration purposes, the application supports three primary access roles:
+
+| Role | Email | Default Password | Access Scope |
+|---|---|---|---|
+| **System Admin** | `admin@geofence.edu` | `Admin@123` | Full administrative control, venue mapping, roster management |
+| **Faculty Member** | `faculty@geofence.edu` | `Faculty@123` | Session management, live feeds, manual check-ins, analytics |
+| **Student** | `student@geofence.edu` | `Student@123` | Geofenced attendance check-in, active class discovery, metrics |
+
+---
+
+## 📄 License
+This project is licensed under the [MIT License](LICENSE).
