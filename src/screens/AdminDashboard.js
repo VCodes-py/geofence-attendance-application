@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, ActivityIndicator as RNActivityIndicator } from 'react-native';
 import { Button, Card, Title, Text, TextInput, Snackbar, IconButton, DataTable, Menu, Switch } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthContext } from '../context/AuthContext';
@@ -198,7 +198,9 @@ const AdminDashboard = () => {
                         valueField="_id"
                     />
 
-                    <Button mode="contained" onPress={handleCreateSubject} loading={subjectLoading} disabled={subjectLoading} style={styles.actionBtn}>Create & Assign Class</Button>
+                    <Button mode="contained" onPress={handleCreateSubject} disabled={subjectLoading} style={styles.actionBtn}>
+                        {subjectLoading ? <RNActivityIndicator size="small" color="#FFFFFF" /> : "Create & Assign Class"}
+                    </Button>
                 </Card.Content>
             </Card>
 
@@ -225,7 +227,9 @@ const AdminDashboard = () => {
                     <TextInput label="Email Address" value={newStudent.email} onChangeText={t => setNewStudent({ ...newStudent, email: t })} style={styles.input} mode="outlined" autoCapitalize="none" />
                     <TextInput label="Role ID (Roll No)" value={newStudent.studentId} onChangeText={t => setNewStudent({ ...newStudent, studentId: t })} style={styles.input} mode="outlined" />
                     <TextInput label="Temporary Password" value={newStudent.password} onChangeText={t => setNewStudent({ ...newStudent, password: t })} style={styles.input} mode="outlined" secureTextEntry />
-                    <Button mode="contained" onPress={handleCreateStudent} loading={studentLoading} disabled={studentLoading} style={styles.actionBtn}>Create Student Account</Button>
+                    <Button mode="contained" onPress={handleCreateStudent} disabled={studentLoading} style={styles.actionBtn}>
+                        {studentLoading ? <RNActivityIndicator size="small" color="#FFFFFF" /> : "Create Student Account"}
+                    </Button>
                 </Card.Content>
             </Card>
 
@@ -257,7 +261,9 @@ const AdminDashboard = () => {
                     <TextInput label="Email Address" value={newFaculty.email} onChangeText={t => setNewFaculty({ ...newFaculty, email: t })} style={styles.input} mode="outlined" autoCapitalize="none" />
                     <TextInput label="Department" value={newFaculty.department} onChangeText={t => setNewFaculty({ ...newFaculty, department: t })} style={styles.input} mode="outlined" />
                     <TextInput label="Temporary Password" value={newFaculty.password} onChangeText={t => setNewFaculty({ ...newFaculty, password: t })} style={styles.input} mode="outlined" secureTextEntry />
-                    <Button mode="contained" onPress={handleCreateFaculty} loading={facultyLoading} disabled={facultyLoading} style={styles.actionBtn}>Create Faculty Account</Button>
+                    <Button mode="contained" onPress={handleCreateFaculty} disabled={facultyLoading} style={styles.actionBtn}>
+                        {facultyLoading ? <RNActivityIndicator size="small" color="#FFFFFF" /> : "Create Faculty Account"}
+                    </Button>
                 </Card.Content>
             </Card>
 
@@ -287,7 +293,9 @@ const AdminDashboard = () => {
                         <TextInput label="Longitude" value={newVenue.lng} onChangeText={t => setNewVenue({ ...newVenue, lng: t })} style={[styles.input, { flex: 1 }]} mode="outlined" keyboardType="numeric" />
                     </View>
                     <TextInput label="Radius (Meters)" value={newVenue.radiusMeters} onChangeText={t => setNewVenue({ ...newVenue, radiusMeters: t })} style={styles.input} mode="outlined" keyboardType="numeric" />
-                    <Button mode="contained" onPress={handleCreateVenue} loading={venueLoading} disabled={venueLoading} style={styles.actionBtn}>Add Geofence Target</Button>
+                    <Button mode="contained" onPress={handleCreateVenue} disabled={venueLoading} style={styles.actionBtn}>
+                        {venueLoading ? <RNActivityIndicator size="small" color="#FFFFFF" /> : "Add Geofence Target"}
+                    </Button>
                 </Card.Content>
             </Card>
 
@@ -369,15 +377,15 @@ const AdminDashboard = () => {
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#F8F9FA' },
     fixedTopContainer: {
-        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#E2E8F0',
         zIndex: 10,
-        elevation: 3,
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
         paddingBottom: 8,
     },
     header: { 

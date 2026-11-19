@@ -48,7 +48,26 @@ export const AlertProvider = ({ children }) => {
         <AlertContext.Provider value={{ showAlert, hideAlert }}>
             {children}
             <Portal>
-                <Dialog visible={visible} onDismiss={hideAlert} style={styles.dialog}>
+                <Dialog 
+                    visible={visible} 
+                    onDismiss={hideAlert} 
+                    style={styles.dialog}
+                    theme={{
+                        colors: {
+                            surface: '#FFFFFF',
+                            surfaceVariant: '#FFFFFF',
+                            elevation: {
+                                level0: 'transparent',
+                                level1: '#FFFFFF',
+                                level2: '#FFFFFF',
+                                level3: '#FFFFFF',
+                                level4: '#FFFFFF',
+                                level5: '#FFFFFF',
+                            },
+                            backdrop: 'rgba(15, 23, 42, 0.45)',
+                        }
+                    }}
+                >
                     <Dialog.Title style={styles.titleContainer}>
                         <MaterialCommunityIcons name={getIcon()} size={28} color={getIconColor()} style={{ marginRight: 8 }} />
                         <Text style={styles.titleText}>{alertConfig.title}</Text>
@@ -83,6 +102,8 @@ const styles = StyleSheet.create({
     dialog: {
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
+        elevation: 24,
+        zIndex: 9999,
     },
     titleContainer: {
         flexDirection: 'row',

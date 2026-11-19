@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Text, Platform } from 'react-native';
-import { Button, Card, Title, Paragraph, TextInput, Menu, Portal, Dialog, DataTable } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, Text, Platform, ActivityIndicator as RNActivityIndicator } from 'react-native';
+import { Button, Card, Title, Paragraph, TextInput, Menu, Portal, Dialog, DataTable, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthContext } from '../context/AuthContext';
 import { AlertContext } from '../context/AlertContext';
@@ -24,6 +24,17 @@ const FacultyDashboard = () => {
     const [stopLoading, setStopLoading] = useState(false);
     const [editLoading, setEditLoading] = useState(false);
     const [manualLoading, setManualLoading] = useState(false);
+
+    // Snackbar notifications
+    const [snackbarVisible, setSnackbarVisible] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [snackbarColor, setSnackbarColor] = useState('#059669');
+
+    const showSnackbar = (message, type = 'success') => {
+        setSnackbarMessage(message);
+        setSnackbarColor(type === 'success' ? '#059669' : type === 'error' ? '#DC2626' : '#0EA5E9');
+        setSnackbarVisible(true);
+    };
 
     // State variables for menus removed as CustomDropdown handles its own state internally.
 
@@ -85,11 +96,12 @@ const FacultyDashboard = () => {
                 durationMinutes: parseInt(duration)
             });
             setActiveSession(res.data.data);
-            showAlert('Success', 'Session Started', null, 'success');
+            showSnackbar('Class session started successfully!', 'success');
         } catch (e) {
-            showAlert('Error', e.response?.data?.message || 'Failed', null, 'error');
+            showAlert('Error', e.response?.data?.message || 'Failed to start class', null, 'error');
+        } finally {
+            setStartLoading(false);
         }
-        setStartLoading(false);
     };
 
     const stopSession = async () => {
@@ -98,11 +110,12 @@ const FacultyDashboard = () => {
         try {
             await client.put(`/classes/${activeSession._id}/stop`);
             setActiveSession(null);
-            showAlert('Success', 'Session Stopped', null, 'success');
+            showSnackbar('Class session stopped successfully.', 'info');
         } catch (e) {
-            showAlert('Error', 'Failed to stop', null, 'error');
+            showAlert('Error', 'Failed to stop session', null, 'error');
+        } finally {
+            setStopLoading(false);
         }
-        setStopLoading(false);
     };
 
     const handleEditSession = () => {
@@ -132,11 +145,12 @@ const FacultyDashboard = () => {
                             const res = await client.put(`/classes/${activeSession._id}`, payload);
                             setActiveSession(res.data.data);
                             setEditModalVisible(false);
-                            showAlert('Success', 'Session updated successfully', null, 'success');
+                            showSnackbar('Session updated successfully!', 'success');
                         } catch (e) {
                             showAlert('Error', e.response?.data?.message || 'Failed to update session', null, 'error');
+                        } finally {
+                            setEditLoading(false);
                         }
-                        setEditLoading(false);
                     }
                 }
             ],
@@ -175,7 +189,7 @@ const FacultyDashboard = () => {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showAlert('Success', 'CSV Exported Successfully.', null, 'success');
+                showSnackbar('CSV exported successfully.', 'success');
             } else {
                 // Native iOS/Android Export
                 const fileUri = FileSystem.documentDirectory + filename;
@@ -184,7 +198,7 @@ const FacultyDashboard = () => {
                 if (await Sharing.isAvailableAsync()) {
                     await Sharing.shareAsync(fileUri);
                 } else {
-                    showAlert('Saved', 'File saved to App Document Directory', null, 'success');
+                    showSnackbar('File saved to Documents directory', 'success');
                 }
             }
         } catch (e) {
@@ -204,7 +218,7 @@ const FacultyDashboard = () => {
                 sessionId: activeSession._id,
                 studentRollNo: studentId
             });
-            showAlert('Success', 'Attendance Marked Manually', null, 'success');
+            showSnackbar('Attendance marked manually!', 'success');
             setStudentId('');
         } catch (e) {
             showAlert('Error', e.response?.data?.message || 'Failed', null, 'error');
@@ -263,12 +277,15 @@ const FacultyDashboard = () => {
                             <Button
                                 mode="contained"
                                 onPress={startSession}
-                                loading={startLoading}
                                 disabled={startLoading}
                                 style={styles.startBtn}
                                 labelStyle={{ fontWeight: 'bold', fontSize: 16, paddingVertical: 4 }}
                             >
-                                Start Class
+                                {startLoading ? (
+                                    <RNActivityIndicator size="small" color="#FFFFFF" />
+                                ) : (
+                                    "Start Class"
+                                )}
                             </Button>
                         ) : (
                             <View style={styles.activeSessionContainer}>
@@ -279,12 +296,15 @@ const FacultyDashboard = () => {
                                 <Button
                                     mode="contained"
                                     onPress={stopSession}
-                                    loading={stopLoading}
                                     disabled={stopLoading}
                                     style={styles.stopBtn}
                                     labelStyle={{ fontWeight: 'bold', fontSize: 16, color: '#FFFFFF', paddingVertical: 4 }}
                                 >
-                                    Stop Class
+                                    {stopLoading ? (
+                                        <RNActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        "Stop Class"
+                                    )}
                                 </Button>
 
                                 <View style={[styles.actionRow, { marginBottom: 8 }]}>
@@ -316,19 +336,28 @@ const FacultyDashboard = () => {
                             <Button
                                 mode="contained"
                                 onPress={manualAttendance}
-                                loading={manualLoading}
                                 disabled={manualLoading}
                                 style={{ backgroundColor: '#0284C7', borderRadius: 8, marginTop: 8 }}
                                 labelStyle={{ fontWeight: 'bold' }}
                             >
-                                Mark Present
+                                {manualLoading ? (
+                                    <RNActivityIndicator size="small" color="#FFFFFF" />
+                                ) : (
+                                    "Mark Present"
+                                )}
                             </Button>
                         </Card.Content>
                     </Card>
                 )}
+            </ScrollView>
 
             <Portal>
-                <Dialog visible={editModalVisible} onDismiss={() => setEditModalVisible(false)} style={{ backgroundColor: '#FFF' }}>
+                <Dialog 
+                    visible={editModalVisible} 
+                    onDismiss={() => setEditModalVisible(false)} 
+                    style={{ backgroundColor: '#FFFFFF', borderRadius: 16, elevation: 24 }}
+                    theme={{ colors: { surface: '#FFFFFF', surfaceVariant: '#FFFFFF', elevation: { level3: '#FFFFFF' } } }}
+                >
                     <Dialog.Title style={{ color: '#0F172A', fontWeight: 'bold' }}>Edit Active Session</Dialog.Title>
                     <Dialog.Content>
                         <TextInput
@@ -357,11 +386,27 @@ const FacultyDashboard = () => {
                     </Dialog.Content>
                     <Dialog.Actions>
                         <Button onPress={() => setEditModalVisible(false)} textColor="#64748B">Cancel</Button>
-                        <Button onPress={handleEditSession} mode="contained" loading={editLoading} disabled={editLoading} style={{ borderRadius: 8, backgroundColor: '#0EA5E9' }}>Save</Button>
+                        <Button 
+                            onPress={handleEditSession} 
+                            mode="contained" 
+                            disabled={editLoading} 
+                            style={{ borderRadius: 8, backgroundColor: '#0EA5E9', minWidth: 80 }}
+                        >
+                            {editLoading ? (
+                                <RNActivityIndicator size="small" color="#FFFFFF" />
+                            ) : (
+                                "Save"
+                            )}
+                        </Button>
                     </Dialog.Actions>
                 </Dialog>
 
-                <Dialog visible={statsModalVisible} onDismiss={() => setStatsModalVisible(false)} style={{ maxHeight: '80%', backgroundColor: '#FFF' }}>
+                <Dialog 
+                    visible={statsModalVisible} 
+                    onDismiss={() => setStatsModalVisible(false)} 
+                    style={{ maxHeight: '80%', backgroundColor: '#FFFFFF', borderRadius: 16, elevation: 24 }}
+                    theme={{ colors: { surface: '#FFFFFF', surfaceVariant: '#FFFFFF', elevation: { level3: '#FFFFFF' } } }}
+                >
                     <Dialog.Title style={{ color: '#0F172A', fontWeight: 'bold' }}>Live Attendance Feed</Dialog.Title>
                     <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
                         <ScrollView contentContainerStyle={{ paddingHorizontal: 16 }}>
@@ -393,7 +438,20 @@ const FacultyDashboard = () => {
                     </Dialog.Actions>
                 </Dialog>
             </Portal>
-            </ScrollView>
+
+            <Snackbar
+                visible={snackbarVisible}
+                onDismiss={() => setSnackbarVisible(false)}
+                duration={3000}
+                style={{ backgroundColor: snackbarColor, borderRadius: 8 }}
+                action={{
+                    label: 'OK',
+                    labelStyle: { color: '#FFF' },
+                    onPress: () => setSnackbarVisible(false),
+                }}
+            >
+                <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 15 }}>{snackbarMessage}</Text>
+            </Snackbar>
         </SafeAreaView>
     );
 };
@@ -410,15 +468,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 10,
         paddingBottom: 14,
-        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#E2E8F0',
         zIndex: 10,
-        elevation: 3,
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
     },
     headerTitle: {
         fontSize: 28,

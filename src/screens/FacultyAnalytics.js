@@ -203,25 +203,31 @@ const FacultyAnalytics = () => {
                                     <Button
                                         mode="contained"
                                         icon={exportingSession ? undefined : "download"}
-                                        loading={exportingSession}
                                         disabled={exportingSession || exportingMonthly}
                                         onPress={exportCSV}
                                         style={styles.exportBtn}
                                         labelStyle={{ fontWeight: 'bold', fontSize: 16 }}
                                     >
-                                        Export Session CSV
+                                        {exportingSession ? (
+                                            <ActivityIndicator size="small" color="#FFFFFF" />
+                                        ) : (
+                                            "Export Session CSV"
+                                        )}
                                     </Button>
 
                                     <Button
                                         mode="outlined"
                                         icon={exportingMonthly ? undefined : "calendar-month"}
-                                        loading={exportingMonthly}
                                         disabled={exportingSession || exportingMonthly}
                                         onPress={exportMonthlyCSV}
                                         style={styles.exportOutlineBtn}
                                         labelStyle={{ fontWeight: 'bold', fontSize: 15 }}
                                     >
-                                        Export Monthly Report
+                                        {exportingMonthly ? (
+                                            <ActivityIndicator size="small" color="#0EA5E9" />
+                                        ) : (
+                                            "Export Monthly Report"
+                                        )}
                                     </Button>
                                 </View>
                             </Card.Content>
@@ -282,15 +288,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 10,
         paddingBottom: 14,
-        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#E2E8F0',
         zIndex: 10,
-        elevation: 3,
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
     },
     headerTitle: {
         fontSize: 28,

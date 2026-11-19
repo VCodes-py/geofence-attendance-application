@@ -1,11 +1,10 @@
 import React, { useContext, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform, ActivityIndicator as RNActivityIndicator } from 'react-native';
 import { TextInput, Button, Title, HelperText } from 'react-native-paper';
 import { AuthContext } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
-import { Platform } from 'react-native';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -76,13 +75,16 @@ const LoginScreen = () => {
                     <Button
                         mode="contained"
                         onPress={handleLogin}
-                        loading={isLoading === true}
                         disabled={isLoading === true}
                         style={styles.button}
                         labelStyle={styles.buttonLabel}
                         contentStyle={styles.buttonContent}
                     >
-                        Secure Login
+                        {isLoading ? (
+                            <RNActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                            "Secure Login"
+                        )}
                     </Button>
                 </View>
             </View>

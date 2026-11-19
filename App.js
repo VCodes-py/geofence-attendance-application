@@ -126,7 +126,7 @@ export default function App() {
     <AuthProvider>
       <PaperProvider>
         <AlertProvider>
-          <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
           <AppNav />
         </AlertProvider>
       </PaperProvider>

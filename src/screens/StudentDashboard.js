@@ -1,11 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, RefreshControl, Platform, ActivityIndicator as RNActivityIndicator } from 'react-native';
 import { Button, Card, Title, Paragraph, Text, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
-import { Platform } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import client from '../api/client';
 import { calculateDistance } from '../utils/haversine';
@@ -255,13 +254,16 @@ const StudentDashboard = () => {
                                 <Button
                                     mode="contained"
                                     onPress={() => markAttendance(session)}
-                                    loading={loadingSessionId === session._id}
                                     disabled={loadingSessionId !== null || location === null}
                                     style={styles.primaryBtn}
                                     labelStyle={{ fontWeight: 'bold', fontSize: 16, paddingVertical: 4 }}
                                     contentStyle={{ width: '100%' }}
                                 >
-                                    Mark Attendance
+                                    {loadingSessionId === session._id ? (
+                                        <RNActivityIndicator size="small" color="#FFFFFF" />
+                                    ) : (
+                                        "Mark Attendance"
+                                    )}
                                 </Button>
                             </Card.Actions>
                         </Card>
@@ -298,15 +300,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 10,
         paddingBottom: 14,
-        backgroundColor: 'rgba(248, 249, 250, 0.98)',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderBottomColor: '#E2E8F0',
         zIndex: 10,
-        elevation: 3,
+        elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
     },
     container: {
         flex: 1,
