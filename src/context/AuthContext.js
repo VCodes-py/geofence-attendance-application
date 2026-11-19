@@ -42,39 +42,44 @@ export const AuthProvider = ({ children }) => {
     const registerForPushNotificationsAsync = async () => {
         if (Platform.OS === 'web') return null;
 
-        let token = null;
-        if (Device.isDevice) {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
-            let finalStatus = existingStatus;
-            if (existingStatus !== 'granted') {
-                const { status } = await Notifications.requestPermissionsAsync();
-                finalStatus = status;
+        try {
+            let token = null;
+            if (Device.isDevice) {
+                const { status: existingStatus } = await Notifications.getPermissionsAsync();
+                let finalStatus = existingStatus;
+                if (existingStatus !== 'granted') {
+                    const { status } = await Notifications.requestPermissionsAsync();
+                    finalStatus = status;
+                }
+                if (finalStatus === 'granted') {
+                    try {
+                        const tokenData = await Notifications.getExpoPushTokenAsync();
+                        token = tokenData.data;
+                        console.log('[Push] Registration Token:', token);
+                    } catch (e) {
+                        console.log('[Push] Push token unavailable in Expo Go (available in standalone APK)');
+                    }
+                }
             }
-            if (finalStatus !== 'granted') {
-                console.log('Failed to get push token for push notifications!');
-                return null;
-            }
-            try {
-                const tokenData = await Notifications.getExpoPushTokenAsync();
-                token = tokenData.data;
-                console.log('[Push] Registration Token:', token);
-            } catch (e) {
-                console.error('[Push] Error fetching Expo push token:', e);
-            }
-        } else {
-            console.log('[Push] Notification requires a physical device');
-        }
 
-        if (Platform.OS === 'android') {
-            await Notifications.setNotificationChannelAsync('default', {
-                name: 'default',
-                importance: Notifications.AndroidImportance.MAX,
-                vibrationPattern: [0, 250, 250, 250],
-                lightColor: '#FF231F7C',
-            });
-        }
+            if (Platform.OS === 'android') {
+                try {
+                    await Notifications.setNotificationChannelAsync('default', {
+                        name: 'default',
+                        importance: Notifications.AndroidImportance.MAX,
+                        vibrationPattern: [0, 250, 250, 250],
+                        lightColor: '#FF231F7C',
+                    });
+                } catch (channelErr) {
+                    console.log('[Push] Notification channel skipped in Expo Go');
+                }
+            }
 
-        return token;
+            return token;
+        } catch (err) {
+            console.log('[Push] Notification setup skipped:', err.message);
+            return null;
+        }
     };
 
     const login = async (email, password, fingerprint) => {
