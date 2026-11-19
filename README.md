@@ -1,5 +1,6 @@
 # 📍 GeoAttendance Mobile Application
 
+[![Download APK](https://img.shields.io/badge/Download-Android_APK_(v1.0.0)-34D399?logo=android&logoColor=white)](https://github.com/VCodes-py/geofence-attendance-application/releases/download/v1.0.0/GeoAttendance-v1.0.0.apk)
 [![React Native](https://img.shields.io/badge/React_Native-v0.88-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
 [![Expo SDK](https://img.shields.io/badge/Expo_SDK-v58-000020?logo=expo&logoColor=white)](https://expo.dev/)
 [![Location Services](https://img.shields.io/badge/Location-High_Precision_GPS-0EA5E9?logo=google-maps&logoColor=white)](https://expo.dev/versions/latest/sdk/location)
@@ -7,6 +8,8 @@
 [![Security](https://img.shields.io/badge/Security-Device_Binding_%26_Anti--Spoof-10B981?logo=shield&logoColor=white)](https://github.com/VCodes-py/geofence-attendance-application)
 
 A modern, location-verified mobile attendance system engineered for universities, colleges, and corporate training centers. **GeoAttendance** automates check-ins by enforcing physical presence within dynamically configured geofence perimeters while shutting down proxy check-ins through hardware device binding and anti-spoof spatial filters.
+
+> **📲 Direct Download**: Grab the standalone release binary from the [Official GitHub Release](https://github.com/VCodes-py/geofence-attendance-application/releases/tag/v1.0.0) or download directly: [**GeoAttendance-v1.0.0.apk**](https://github.com/VCodes-py/geofence-attendance-application/releases/download/v1.0.0/GeoAttendance-v1.0.0.apk) (No Expo Go needed).
 
 ---
 
